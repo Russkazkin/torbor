@@ -12,18 +12,21 @@ use \yii\base\BaseObject;
  * @param int $allowedVariation Допустимое отклонение в процентах
  * @param int $price Текущая цена
  * @param int|null $oldPrice Предыдущая цена
- * @param bool $_result Результат проверки цен
+ * @param int $_amount Разница между текущей ценой и предыдущей в процентах
  *
  * Класс контролирует наценку/скидку между текущей ценой и предыдущей
  * Примеры:
  * $control = new PriceDiffControl(15, 120, 100);
- * var_dump($model->result); //int(0) Так как разница цен 20 процентов, что больше нормы в 15
+ * var_dump($control->amount); //int(20) Процентная разница 20 процентов
+ * var_dump($control->diff()); //bool(false) Превышает норму в 15 процентов
  *
- * $control = new PriceDiffControl(15, 105, 100);
- * var_dump($model->result); //int(1) Так как разница цен 5 процентов, что укладывается в норму
+ * $control = new PriceDiffControl(15, 114, 100);
+ * var_dump($control->amount); //int(14) Процентная разница 14 процентов
+ * var_dump($control->diff()); //bool(true) Укладывается в норму в 15 процентов
  *
  * $control = new PriceDiffControl(15, 105);
- * var_dump($model->result); //int(1) Старая цена отсутствует, мы сравниваем текущую цену с текущей ценой, что дает нам true на выходе
+ * var_dump($control->amount); //int(0) Предыдущая цена отсутствует, процентная разница - 0 процентов
+ * var_dump($control->diff()); //bool(true) Укладывается в норму в 15 процентов
  */
 
 class PriceDiffControl extends BaseObject
@@ -31,7 +34,7 @@ class PriceDiffControl extends BaseObject
     public $allowedVariation;
     public $price;
     public $oldPrice;
-    private $_result;
+    private $_amount;
 
     /**
      * PriceDiffControl constructor.
@@ -50,36 +53,35 @@ class PriceDiffControl extends BaseObject
     }
 
     /**
-     * Метод инициализирует private свойство $_result и сохраняет в него результат проверки цен. Свойство доступно через геттер getResult()
+     * Метод инициализирует private свойство $_amount,
+     * рассчитывает процентную разницу между текущей ценой и предыдущей
+     * и сохраняет разницу в процентах в свойство $_amount
      */
     public function init()
     {
         parent::init();
-        $this->_result = $this->diff($this->price, $this->oldPrice, $this->allowedVariation);
+        $this->_amount = abs(($this->price - $this->oldPrice) / $this->oldPrice) * 100;
     }
 
     /**
-     * Метод находит процентное изменение
-     * и сранивает с допустимым значением.
+     * Метод сравнивает процентное изменение
+     * с допустимым значением.
      * Если изменение не укладывается в норму, возращает false.
      * В противном случае true
-     * @param $price
-     * @param $oldPrice
-     * @param $allowedVariation
+     *
      * @return bool
      */
-    public function diff(int $price, int $oldPrice, int $allowedVariation) : bool
+    public function diff() : bool
     {
-        $diff = abs(($price - $oldPrice) / $oldPrice) * 100;
-        return $diff > $allowedVariation ? false : true;
+        return $this->_amount > $this->allowedVariation ? false : true;
     }
 
     /**
-     * Получем разультат сравнения цен
+     * Геттер для получения свойства $_amount
      * @return int
      */
-    public function getResult() : int
+    public function getAmount() : int
     {
-        return $this->_result;
+        return $this->_amount;
     }
 }
