@@ -16,15 +16,15 @@ use \yii\base\BaseObject;
  *
  * Класс контролирует наценку/скидку между текущей ценой и предыдущей
  * Примеры:
- * $control = new PriceDiffControl(15, 120, 100);
+ * $control = new PriceDiffControl(['allowedVariation' => 15, 'price' => 120, 'oldPrice' => 100]);
  * var_dump($control->amount); //int(20) Процентная разница 20 процентов
  * var_dump($control->diff()); //bool(false) Превышает норму в 15 процентов
  *
- * $control = new PriceDiffControl(15, 114, 100);
+ * $control = new PriceDiffControl(['allowedVariation' => 15, 'price' => 114, 'oldPrice' => 100]);
  * var_dump($control->amount); //int(14) Процентная разница 14 процентов
  * var_dump($control->diff()); //bool(true) Укладывается в норму в 15 процентов
  *
- * $control = new PriceDiffControl(15, 105);
+ * $control = new PriceDiffControl(['allowedVariation' => 15, 'price' => 114]);
  * var_dump($control->amount); //int(0) Предыдущая цена отсутствует, процентная разница - 0 процентов
  * var_dump($control->diff()); //bool(true) Укладывается в норму в 15 процентов
  */
@@ -33,33 +33,20 @@ class PriceDiffControl extends BaseObject
 {
     public $allowedVariation;
     public $price;
-    public $oldPrice;
+    public $oldPrice = null;
     private $_amount;
 
     /**
-     * PriceDiffControl constructor.
-     * @param int $allowedVariation Допустимое отклонение в процентах
-     * @param int $price Текущая цена
-     * @param int|null $oldPrice Предыдущая цена
-     * @param array $config
-     */
-    public function __construct(int $allowedVariation, int $price, int $oldPrice = null, array $config = [])
-    {
-        $this->allowedVariation = $allowedVariation;
-        $this->price = $price;
-        $this->oldPrice = $oldPrice ? $oldPrice : $price;
-        parent::__construct($config);
-
-    }
-
-    /**
-     * Метод инициализирует private свойство $_amount,
+     * Метод проверяет свойство $oldPrice и присваивает ему значение из $price,
+     * если его значение не задано или равно 0.
+     * Так же инициализирует private свойство $_amount,
      * рассчитывает процентную разницу между текущей ценой и предыдущей
      * и сохраняет разницу в процентах в свойство $_amount
      */
     public function init()
     {
         parent::init();
+        $this->oldPrice = $this->oldPrice ? $this->oldPrice : $this->price;
         $this->_amount = abs(($this->price - $this->oldPrice) / $this->oldPrice) * 100;
     }
 
